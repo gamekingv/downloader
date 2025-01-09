@@ -13,6 +13,10 @@
         <v-tab key="download" class="primary--text">
           <v-icon>mdi-download</v-icon>
         </v-tab>
+
+        <v-tab key="anime-list" class="primary--text">
+          <v-icon>mdi-format-list-text</v-icon>
+        </v-tab>
       </v-tabs>
     </v-app-bar>
 
@@ -67,6 +71,9 @@
             <v-tab-item key="download">
               <Downloading @alert="showAlert" />
             </v-tab-item>
+            <v-tab-item key="anime-list">
+              <AnimeList @alert="showAlert" />
+            </v-tab-item>
           </v-tabs-items>
         </v-row>
       </v-container>
@@ -93,22 +100,30 @@ import { Vue, Component } from 'vue-property-decorator';
 import Add from './components/Add.vue';
 import TextAdd from './components/TextAdd.vue';
 import Downloading from './components/Downloading.vue';
+import AnimeList from './components/AnimeList.vue';
 import network from '@/utils/network';
 
 @Component({
   components: {
-    Add, TextAdd, Downloading
-  }
+    Add,
+    TextAdd,
+    Downloading,
+    AnimeList,
+  },
 })
-
 export default class APP extends Vue {
-  private tab = 'add'
-  private repos: { text: string; value: number }[] = []
-  private repository = ''
-  private repositoryToken = ''
-  private server = ''
-  private serverToken = ''
-  private alerts: { show: boolean; text: string; type: string; shown: boolean }[] = []
+  private tab = 'add';
+  private repos: { text: string; value: number }[] = [];
+  private repository = '';
+  private repositoryToken = '';
+  private server = '';
+  private serverToken = '';
+  private alerts: {
+    show: boolean;
+    text: string;
+    type: string;
+    shown: boolean;
+  }[] = [];
 
   private async mounted() {
     this.repository = localStorage.getItem('repository') || '';
@@ -120,9 +135,12 @@ export default class APP extends Vue {
         const server = await network.giteeFetch('public_url.txt');
         const serverToken = await network.giteeFetch('token.txt');
         const repos = JSON.parse(await network.giteeFetch('repo.json'));
-        this.repos.push(...repos.map((name: string, index: number) => ({
-          text: name, value: index
-        })));
+        this.repos.push(
+          ...repos.map((name: string, index: number) => ({
+            text: name,
+            value: index,
+          }))
+        );
         if (this.server !== server || this.serverToken !== serverToken) {
           this.server = server;
           this.saveServer(server);
@@ -130,8 +148,7 @@ export default class APP extends Vue {
           this.saveServerToken(serverToken);
           this.showAlert('从Gitee更新服务器信息成功', 'success');
         }
-      }
-      catch (e) {
+      } catch (e) {
         this.showAlert('从Gitee获取服务器信息失败', 'error', e);
       }
     }
@@ -149,14 +166,15 @@ export default class APP extends Vue {
     localStorage.setItem('serverToken', serverToken);
   }
   private showAlert(text: string, type = '', error?: unknown): void {
-    const freeAlert = this.alerts.find(alert => alert.show === false && alert.shown === true);
+    const freeAlert = this.alerts.find(
+      (alert) => alert.show === false && alert.shown === true
+    );
     const newAlert = { show: false, text, type, shown: false };
     if (freeAlert) {
       newAlert.show = true;
       newAlert.shown = true;
       Object.assign(freeAlert, newAlert);
-    }
-    else {
+    } else {
       this.alerts.push(newAlert);
       this.$nextTick(() => {
         newAlert.show = true;
@@ -166,7 +184,10 @@ export default class APP extends Vue {
     if (type === 'error' && error instanceof Error) {
       // eslint-disable-next-line
       console.error(
-        `%c${this.$projectName}%cv${this.$projectVersion}%c ${error.stack ?? error}`,
+        // @ts-expect-error ignore
+        `%c${this.$projectName}%cv${this.$projectVersion}%c ${
+          error.stack ?? error
+        }`,
         'border-radius: 4px 0 0 4px;color:#fff;background:#424242; padding: 0 4px',
         'color:white;background:#01579B;border-radius: 0 4px 4px 0;padding: 0 4px',
         ''
